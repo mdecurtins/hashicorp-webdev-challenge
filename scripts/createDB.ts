@@ -73,6 +73,7 @@ async function main() {
 			CREATE TABLE IF NOT EXISTS PEOPLE (
 				ID VARCHAR (10) NOT NULL PRIMARY KEY,
 				NAME VARCHAR(255) NOT NULL,
+				TITLE VARCHAR(255) DEFAULT NULL,
 				AVATAR_URL VARCHAR(255) DEFAULT NULL,
 				DEPARTMENT_ID VARCHAR(10) NOT NULL,
 				FOREIGN KEY ( DEPARTMENT_ID ) REFERENCES DEPARTMENTS ( ID )
@@ -111,8 +112,8 @@ async function main() {
 		)
 
 		const insertPersonRow = db.prepare(`
-			INSERT INTO PEOPLE (ID, NAME, AVATAR_URL, DEPARTMENT_ID)
-			VALUES (:id, :name, :avatar_url, (SELECT ID FROM DEPARTMENTS WHERE NAME = :department_name))
+			INSERT INTO PEOPLE (ID, NAME, TITLE, AVATAR_URL, DEPARTMENT_ID)
+			VALUES (:id, :name, :title, :avatar_url, (SELECT ID FROM DEPARTMENTS WHERE NAME = :department_name))
 		`)
 
 		const insertPeople = db.transaction((people) => {
@@ -126,6 +127,7 @@ async function main() {
 				return {
 					id: person.id,
 					name: person.name,
+					title: person.title,
 					avatar_url: person.avatar?.url || null,
 					department_name: person.department?.name,
 				}
