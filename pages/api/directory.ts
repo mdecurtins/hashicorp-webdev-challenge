@@ -3,10 +3,8 @@ import { PersonRecord, DepartmentNode } from 'types'
 import Database from 'better-sqlite3'
 
 type ResponseData = {
-	results: {
-		allDepartments: DepartmentNode[]
-		allPeople: PersonRecord[]
-	}
+	allDepartments: DepartmentNode[]
+	allPeople: PersonRecord[]
 }
 
 // Typically we might want to generate these TS types from our SQL schema, but that's beyond the scope of this
@@ -92,5 +90,5 @@ export default function handler(
 		})
 	}
 
-	res.status(200).json({ results: { allDepartments, allPeople } })
+	res.status(200).json({ allDepartments, allPeople })
 }
