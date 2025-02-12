@@ -1,0 +1,12 @@
+/**
+ * Copyright (c) HashiCorp, Inc.
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
+@import '~@hashicorp/mktg-global-styles/style.css';
+@import '~@hashicorp/platform-code-highlighting/style.css';
+
+@import '../layouts/base/components/footer/style.css';
+@import '../layouts/base/components/nav/style.css';
+
+/* Global styles here */
