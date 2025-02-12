@@ -23,12 +23,10 @@ export const buildChildren = (
 	)
 }
 
-// TODO: There is a bug in this function that is causing the DepartmentFilter component to not render correctly
 export const departmentRecordsToDepartmentTree = (
 	departments: DepartmentNode[]
 ): DepartmentRecord[] => {
 	const listWithChildren = buildChildren(departments)
-
 	return departments.reduce(
 		(nestedList: DepartmentRecord[], item: DepartmentRecord) => {
 			const currentItemWithChildren = listWithChildren[item.id]
@@ -40,7 +38,7 @@ export const departmentRecordsToDepartmentTree = (
 				)
 			}
 
-			return nestedList
+			return [...nestedList, ...[currentItemWithChildren]]
 		},
 		[] as DepartmentRecord[]
 	)
