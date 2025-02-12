@@ -27,18 +27,16 @@ interface Props {
 }
 
 export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
-	// Sr. candidate TODO: Load data from DB
-
-	const result = await executeQuery<{
+	// Fetch data from SQLite in the same shape as the GraphQL query would have given us
+	const res = await fetch('http://localhost:3000/api/directory')
+	const results = (await res.json()) as {
 		allPeople: PersonRecord[]
 		allDepartments: DepartmentNode[]
-	}>(query, {
-		token: `${process.env.DATO_API_TOKEN}`,
-	})
+	}
 
 	const data = {
-		allPeople: result.allPeople,
-		allDepartments: result.allDepartments,
+		allPeople: results.allPeople,
+		allDepartments: results.allDepartments,
 	}
 
 	return {
