@@ -10,17 +10,17 @@ type ResponseData = {
 // Typically we might want to generate these TS types from our SQL schema, but that's beyond the scope of this
 // challenge
 type DepartmentRow = {
-	id: string
-	name: string
-	parent: string | null
+	ID: string
+	NAME: string
+	PARENT: string | null
 }
 
 type PersonRow = {
-	id: string
-	name: string
-	title: string
-	avatar_url: string | null
-	department_id: string | null
+	ID: string
+	NAME: string
+	TITLE: string
+	AVATAR_URL: string | null
+	DEPARTMENT_ID: string | null
 }
 
 /**
@@ -49,16 +49,16 @@ export default function handler(
 		allDepartments = departments.map((department: DepartmentRow) => {
 			let parent: DepartmentNode = null
 
-			if (department.parent != null) {
+			if (department.PARENT != null) {
 				parent =
 					(departments.find(
-						(d) => d.id === department.parent
+						(d) => d.id === department.PARENT
 					) as DepartmentNode) || null
 			}
 
 			return {
-				id: department.id,
-				name: department.name,
+				id: department.ID,
+				name: department.NAME,
 				parent: parent,
 			}
 		})
@@ -72,18 +72,18 @@ export default function handler(
 		allPeople = people.map((person: PersonRow) => {
 			let dept: DepartmentNode = null
 
-			if (person.department_id != null) {
+			if (person.DEPARTMENT_ID != null) {
 				dept = allDepartments.find(
-					(d) => d.id === person.department_id
+					(d) => d.id === person.DEPARTMENT_ID
 				) as DepartmentNode
 			}
 
 			return {
-				id: person.id,
-				name: person.name,
-				title: person.title,
+				id: person.ID,
+				name: person.NAME,
+				title: person.TITLE,
 				avatar: {
-					url: person.avatar_url,
+					url: person.AVATAR_URL,
 				},
 				department: dept != null ? { name: dept.name } : null,
 			}
