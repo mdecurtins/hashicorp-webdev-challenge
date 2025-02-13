@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { executeQuery } from '@datocms/cda-client'
 import { GetStaticPropsResult } from 'next'
 import { PersonRecord, DepartmentNode, DepartmentTree, Department } from 'types'
 import BaseLayout from '../../layouts/base'
-
+import { useRouter } from 'next/router'
 import {
 	filterPeople,
 	findDepartments,
@@ -51,7 +51,13 @@ export default function PeoplePage({
 	allPeople,
 	departmentTree,
 }: Props): React.ReactElement {
-	const [searchingName, setSearchingName] = useState('')
+	const router = useRouter()
+	const { query } = router
+
+	const searchingName = (query.searchingName as string) || ''
+	const selectedDepartment = (query.department as string) || ''
+
+	//const [searchingName, setSearchingName] = useState('')
 	const [hideNoPicture, setHideNoPicture] = useState(false)
 	const [filteredDepartments, setFilteredDepartments] = useState([])
 
@@ -61,16 +67,17 @@ export default function PeoplePage({
 		hideNoPicture,
 		findChildrenDepartments(
 			departmentTree,
-			filteredDepartments[filteredDepartments.length - 1]?.id || []
+			filteredDepartments[filteredDepartments.length - 1]?.id ||
+				// Derive the initial value if department is available in a URL query parameter
+				findDepartments(departmentTree, selectedDepartment)?.[0]?.id
 		)
 	)
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
 		(acc: string[], department: DepartmentNode) => [...acc, department.id],
-		[]
+		// Derive the initial value of the accumulator if a department is available in a URL query parameter
+		selectedDepartment !== '' ? [selectedDepartment] : []
 	)
-
-	// Sr. candidate TODO: Update URL based on search and department filters
 
 	return (
 		<main className="g-grid-container">
@@ -81,12 +88,24 @@ export default function PeoplePage({
 				</div>
 				<Search
 					onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						setSearchingName(e.target.value)
+						//setSearchingName(e.target.value)
 						/**
 						 * Sr. candidate TODO: Hit the API to search for people
 						 * You can use the following URL to hit the API
 						 * /api/hashicorp?search=...
 						 */
+
+						router.push(
+							{
+								pathname: '/people',
+								query: {
+									...query,
+									searchingName: e.target.value,
+								},
+							},
+							null,
+							{ shallow: true }
+						)
 					}}
 					onProfileChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 						setHideNoPicture(e.target.checked)
@@ -99,6 +118,17 @@ export default function PeoplePage({
 						filteredDepartmentIds={filteredDepartmentIds}
 						clearFiltersHandler={() => {
 							setFilteredDepartments([])
+
+							router.push(
+								{
+									pathname: '/people',
+									query: {
+										...query,
+									},
+								},
+								null,
+								{ shallow: true }
+							)
 						}}
 						selectFilterHandler={(departmentFilter: Department) => {
 							const totalDepartmentFilter = findDepartments(
@@ -106,6 +136,18 @@ export default function PeoplePage({
 								departmentFilter.id
 							)
 							setFilteredDepartments(totalDepartmentFilter)
+
+							router.push(
+								{
+									pathname: '/people',
+									query: {
+										...query,
+										department: departmentFilter.id,
+									},
+								},
+								null,
+								{ shallow: true }
+							)
 						}}
 						departmentTree={departmentTree}
 					/>
