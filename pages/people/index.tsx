@@ -60,9 +60,10 @@ export default function PeoplePage({
 	//const [searchingName, setSearchingName] = useState('')
 	const [hideNoPicture, setHideNoPicture] = useState(false)
 	const [filteredDepartments, setFilteredDepartments] = useState([])
+	const [apiResults, setApiResults] = useState([])
 
 	const peopleFiltered = filterPeople(
-		allPeople,
+		apiResults.length > 0 ? apiResults : allPeople,
 		searchingName,
 		hideNoPicture,
 		findChildrenDepartments(
@@ -89,11 +90,12 @@ export default function PeoplePage({
 				<Search
 					onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 						//setSearchingName(e.target.value)
-						/**
-						 * Sr. candidate TODO: Hit the API to search for people
-						 * You can use the following URL to hit the API
-						 * /api/hashicorp?search=...
-						 */
+						fetch(`/api/hashicorp?search=${e.target.value}`)
+							.then((res) => res.json())
+							.then((data: { results: PersonRecord[] }) => {
+								setApiResults(data.results)
+							})
+							.catch((err) => console.error(err))
 
 						router.push(
 							{
