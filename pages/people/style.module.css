@@ -9,7 +9,7 @@
 
 /* ref: https://preset-env.cssdb.org/ */
 .departmentFilter {
-	flex: 0 1 25%;
+	flex: 0 1 20%;
 }
 
 .filterGrid {
@@ -21,11 +21,16 @@
 	flex-direction: column;
 	justify-content: space-between;
 	align-items: center;
+
+	& h1 {
+		font-family: Open Sans, sans-serif;
+		font-weight: 300;
+	}
 }
 
 .personGrid {
 	list-style-type: none;
-	flex: 1 1 75%;
+	flex: 0 1 100%;
 	display: grid;
 
 	/*
@@ -33,8 +38,15 @@
 	*/
 	--num-columns: 3;
 	--column-min-width: 280px;
-	--num-gutters: 2;
-	--gutter-size: 10px;
+	--num-gutters: 0;
+	--gutter-size: 20px;
+
+	@media (--medium-up) {
+		--num-gutters: 2;
+
+		flex: 1 1 80%;
+	}
+
 	--total-gutter-size: calc(var(--gutter-size) * var(--num-gutters));
 	--column-max-width: calc(
 		(100% - var(--total-gutter-size)) / var(--num-columns)
@@ -44,7 +56,11 @@
 		auto-fill,
 		minmax(max(var(--column-min-width), var(--column-max-width)), 1fr)
 	);
-	grid-gap: var(--gutter-size);
+	grid-gap: calc(var(--gutter-size) * 2) var(--gutter-size);
+
+	@media (--small) {
+		padding-left: 0;
+	}
 }
 
 .searchColumn {
@@ -54,4 +70,5 @@
 .searchContainer {
 	display: flex;
 	justify-content: center;
+	margin-bottom: 2rem;
 }
