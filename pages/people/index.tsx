@@ -116,7 +116,9 @@ export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
 	return {
 		props: {
 			allPeople: allPeople,
-			departmentTree: departmentRecordsToDepartmentTree(allDepartments),
+			departmentTree: departmentRecordsToDepartmentTree(allDepartments).filter(
+				(department) => department.parent == null
+			),
 		},
 	}
 }
