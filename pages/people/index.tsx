@@ -154,10 +154,12 @@ export default function PeoplePage({
 		const params: FetchFilteredDataOptions = { ...router.query, ...opts }
 
 		const urlParams = Object.entries(params)
-			.filter(
-				([key, value]) =>
-					(key === 'searchingName' || key === 'department') && value !== ''
-			)
+			.filter(([key, value]) => {
+				return (
+					((key === 'searchingName' || key === 'department') && value !== '') ||
+					key === 'hideNoPicture'
+				)
+			})
 			.map(([key, value]) => `${key}=${value}`)
 			.join('&')
 
