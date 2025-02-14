@@ -90,50 +90,45 @@ export default function handler(
 			FROM PEOPLE P
 			INNER JOIN DEPARTMENTS D
 			ON P.DEPARTMENT_ID = D.ID
+			WHERE 1 = 1
 		`
 
 		// N.B. In a situation where I couldn't use an ORM and had to build SQL strings dynamically, I would prefer to use
 		// a string builder pattern rather than writing out the string concatenation logic like this.
 		// I prefer to co-locate bind parameter assignment with SQL concatenation to ensure I don't forget to bind any
 		// parameters.
-		if (nameParam || avatarParam || departmentParam) {
+		if (nameParam) {
 			sql += `
-			WHERE 1 = 1
+			AND P.NAME LIKE :nameParam
 			`
+			sqlParams.nameParam = `%${nameParam.trim().toLowerCase()}%`
+		}
 
-			if (nameParam) {
+		// In this case, TRUE means exclude people with avatars.
+		if (avatarParam) {
+			sql += `
+			AND P.AVATAR_URL IS NULL
+			`
+		}
+
+		if (departmentParam) {
+			const matches = findDepartments(departmentTree, departmentParam)
+
+			if (matches.length > 1) {
 				sql += `
-				AND P.NAME LIKE :nameParam
+				AND D.ID IN (${matches.map((m, i) => `department_${i}`).join(',')})
 				`
-				sqlParams.nameParam = `%${nameParam.trim().toLowerCase()}%`
-			}
-
-			// In this case, TRUE means exclude people with avatars.
-			if (avatarParam) {
+				sqlParams = matches.reduce((acc, curr, i) => {
+					acc[`department_${i}`] = curr.id
+					return acc
+				}, sqlParams)
+			} else if (matches.length === 1) {
 				sql += `
-				AND P.AVATAR_URL IS NULL
+				AND D.ID = :departmentParam
 				`
-			}
-
-			if (departmentParam) {
-				const matches = findDepartments(departmentTree, departmentParam)
-
-				if (matches.length > 1) {
-					sql += `
-					AND D.ID IN (${matches.map((m, i) => `department_${i}`).join(',')})
-					`
-					sqlParams = matches.reduce((acc, curr, i) => {
-						acc[`department_${i}`] = curr.id
-						return acc
-					}, sqlParams)
-				} else if (matches.length === 1) {
-					sql += `
-					AND D.ID = :departmentParam
-					`
-					sqlParams.departmentParam = departmentParam
-				} else {
-					console.info(`Invalid department parameter found: ${departmentParam}`)
-				}
+				sqlParams.departmentParam = departmentParam
+			} else {
+				console.info(`Invalid department parameter found: ${departmentParam}`)
 			}
 		}
 
