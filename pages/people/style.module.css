@@ -47,6 +47,10 @@
 	grid-gap: var(--gutter-size);
 }
 
+.searchColumn {
+	min-width: 40%;
+}
+
 .searchContainer {
 	display: flex;
 	justify-content: center;

@@ -178,7 +178,7 @@ export default function PeoplePage({
 	return (
 		<main className="g-grid-container">
 			<div className={s.searchContainer}>
-				<div>
+				<div className={s.searchColumn}>
 					<div className={s.masthead}>
 						<h1>HashiCorp Humans</h1>
 						<span>Find a HashiCorp human</span>
