@@ -24,6 +24,7 @@ import {
 } from '../../utilities'
 // import query from './query.graphql'
 import Database from 'better-sqlite3'
+import s from './style.module.css'
 
 import Profile from 'components/profile'
 import Search from 'components/search'
@@ -176,46 +177,48 @@ export default function PeoplePage({
 
 	return (
 		<main className="g-grid-container">
-			<div>
-				<div>
-					<h1>HashiCorp Humans</h1>
-					<span>Find a HashiCorp human</span>
+			<div className={s.searchContainer}>
+				<div className={s.searchControls}>
+					<div>
+						<h1>HashiCorp Humans</h1>
+						<span>Find a HashiCorp human</span>
+					</div>
+					<Search
+						onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+							router.push(
+								{
+									pathname: '/people',
+									query: {
+										...query,
+										searchingName: e.target.value,
+									},
+								},
+								null,
+								{ shallow: true }
+							)
+
+							fetchFilteredData(router, { searchingName: e.target.value })
+						}}
+						onProfileChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+							router.push(
+								{
+									pathname: '/people',
+									query: {
+										...query,
+										hideNoPicture: e.target.checked,
+									},
+								},
+								null,
+								{ shallow: true }
+							)
+
+							fetchFilteredData(router, { hideNoPicture: e.target.checked })
+						}}
+					/>
 				</div>
-				<Search
-					onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						router.push(
-							{
-								pathname: '/people',
-								query: {
-									...query,
-									searchingName: e.target.value,
-								},
-							},
-							null,
-							{ shallow: true }
-						)
-
-						fetchFilteredData(router, { searchingName: e.target.value })
-					}}
-					onProfileChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						router.push(
-							{
-								pathname: '/people',
-								query: {
-									...query,
-									hideNoPicture: e.target.checked,
-								},
-							},
-							null,
-							{ shallow: true }
-						)
-
-						fetchFilteredData(router, { hideNoPicture: e.target.checked })
-					}}
-				/>
 			</div>
-			<div>
-				<aside>
+			<div className={s.filterGrid}>
+				<aside className={s.departmentFilter}>
 					<DepartmentFilter
 						filteredDepartmentIds={filteredDepartmentIds}
 						clearFiltersHandler={() => {
@@ -258,7 +261,7 @@ export default function PeoplePage({
 						departmentTree={departmentTree}
 					/>
 				</aside>
-				<ul>
+				<ul className={s.personGrid}>
 					{filteredPeople.length === 0 && (
 						<div>
 							<span>No results found.</span>
