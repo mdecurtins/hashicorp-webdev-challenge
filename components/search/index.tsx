@@ -15,11 +15,12 @@ export default function Search({
 }: SearchProps) {
 	return (
 		<div className={s.searchControls}>
-			<div>
+			<div className={s.searchControlChild}>
 				<input
 					type="text"
 					placeholder="Search people by name"
 					onChange={onInputChange}
+					className={s.search}
 				/>
 			</div>
 
