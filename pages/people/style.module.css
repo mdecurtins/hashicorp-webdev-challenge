@@ -8,3 +8,43 @@
 /* you can use standard css plus anything from postcss-preset-env */
 
 /* ref: https://preset-env.cssdb.org/ */
+.departmentFilter {
+	flex: 0 1 25%;
+}
+
+.filterGrid {
+	display: flex;
+}
+
+.personGrid {
+	list-style-type: none;
+	flex: 1 1 75%;
+	display: grid;
+
+	/*
+	With deep appreciation for: https://css-tricks.com/an-auto-filling-css-grid-with-max-columns/
+	*/
+	--num-columns: 3;
+	--column-min-width: 280px;
+	--num-gutters: 2;
+	--gutter-size: 10px;
+	--total-gutter-size: calc(var(--gutter-size) * var(--num-gutters));
+	--column-max-width: calc(
+		(100% - var(--total-gutter-size)) / var(--num-columns)
+	);
+
+	grid-template-columns: repeat(
+		auto-fill,
+		minmax(max(var(--column-min-width), var(--column-max-width)), 1fr)
+	);
+	grid-gap: var(--gutter-size);
+}
+
+.searchContainer {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.searchControls {
+	flex: 0 1 75%;
+}
