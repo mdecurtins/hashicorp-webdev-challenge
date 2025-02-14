@@ -32,7 +32,7 @@ type SqlParams = {
  *
  * Recognized URL query parameters:
  * - `searchingName`: `string` -- Find people with names including the substring `nameLike`
- * - `hideNoAvatar`: `boolean` -- Exclude people with no avatar
+ * - `hideNoPicture`: `boolean` -- Exclude people with no avatar
  * - `department`: `string` -- Find people with the given department id.
  *
  * @param req
@@ -77,7 +77,7 @@ export default function handler(
 		let sqlParams: SqlParams = {}
 
 		const nameParam = (query.searchingName as string) || ''
-		const avatarParam = ((query.hideNoAvatar as string) || '') === 'true'
+		const avatarParam = ((query.hideNoPicture as string) || '') === 'true'
 		const departmentParam = (query.department as string) || ''
 
 		let sql = `
@@ -104,10 +104,10 @@ export default function handler(
 			sqlParams.nameParam = `%${nameParam.trim().toLowerCase()}%`
 		}
 
-		// In this case, TRUE means exclude people with avatars.
+		// In this case, TRUE means exclude people with no avatars.
 		if (avatarParam) {
 			sql += `
-			AND P.AVATAR_URL IS NULL
+			AND P.AVATAR_URL IS NOT NULL
 			`
 		}
 
