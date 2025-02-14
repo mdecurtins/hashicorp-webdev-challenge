@@ -13,6 +13,7 @@ import {
 	DepartmentNode,
 	DepartmentRow,
 	DepartmentTree,
+	PersonRow,
 } from 'types'
 import Database from 'better-sqlite3'
 
@@ -44,129 +45,121 @@ export default function handler(
 	const { query } = req
 
 	const db = new Database('hashicorp.sqlite')
-	let allDepartments: DepartmentNode[] = []
-
-	try {
-		const stmt = db.prepare('SELECT * FROM DEPARTMENTS')
-
-		const departments = stmt.all()
-
-		if (departments.length > 0) {
-			allDepartments = departments.map((department: DepartmentRow) => {
-				let parent: DepartmentNode = null
-
-				if (department.PARENT != null) {
-					parent =
-						(departments.find(
-							(d) => d.id === department.PARENT
-						) as DepartmentNode) || null
-				}
-
-				return {
-					id: department.ID,
-					name: department.NAME,
-					parent: parent,
-				}
-			})
-		}
-	} catch (e) {
-		console.error(e)
-	}
-
-	const departmentTree: DepartmentTree =
-		departmentRecordsToDepartmentTree(allDepartments)
-
-	let sqlParams: SqlParams = {}
-
-	const nameParam = (query.nameLike as string) || ''
-	const avatarParam = ((query.hideNoAvatar as string) || '') === 'true'
-	const departmentParam = (query.department as string) || ''
-
-	let sql = `
-		SELECT
-			P.ID AS PERSON_ID,
-			P.NAME AS PERSON_NAME,
-			P.AVATAR_URL,
-			D.ID AS DEPARTMENT_ID,
-			D.NAME AS DEPARTMENT_NAME
-		FROM PEOPLE P
-		INNER JOIN DEPARTMENTS D
-		ON P.DEPARTMENT_ID = D.ID
-	`
-
-	// N.B. In a situation where I couldn't use an ORM and had to build SQL strings dynamically, I would prefer to use
-	// a string builder pattern rather than writing out the string concatenation logic like this.
-	// I prefer to co-locate bind parameter assignment with SQL concatenation to ensure I don't forget to bind any
-	// parameters.
-	if (nameParam || avatarParam || departmentParam) {
-		sql += `
-		WHERE 1 = 1
-		`
-
-		if (nameParam) {
-			sql += `
-			AND P.NAME LIKE :nameParam
-			`
-			sqlParams.nameParam = `%${nameParam.trim().toLowerCase()}%`
-		}
-
-		// In this case, TRUE means exclude people with avatars.
-		if (avatarParam) {
-			sql += `
-			AND P.AVATAR_URL IS NULL
-			`
-		}
-
-		if (departmentParam) {
-			const matches = findDepartments(departmentTree, departmentParam)
-
-			if (matches.length > 1) {
-				sql += `
-				AND D.ID IN (${matches.map((m, i) => `department_${i}`).join(',')})
-				`
-				sqlParams = matches.reduce((acc, curr, i) => {
-					acc[`department_${i}`] = curr.id
-					return acc
-				}, sqlParams)
-			} else if (matches.length === 1) {
-				sql += `
-				AND D.ID = :departmentParam
-				`
-				sqlParams.departmentParam = departmentParam
-			} else {
-				console.info(`Invalid department parameter found: ${departmentParam}`)
-			}
-		}
-	}
-
-	// Per acceptance criteria, limit search results to 100 records maximum.
-	sql += ` LIMIT 100`
-
-	const stmt = db.prepare(sql)
 
 	let data: PersonRecord[] = []
 
 	try {
+		let allDepartments: DepartmentNode[] = []
+
+		const deptsStmt = db.prepare('SELECT * FROM DEPARTMENTS')
+		const departments = deptsStmt.all()
+
+		allDepartments = departments.map((department: DepartmentRow) => {
+			let parent: DepartmentNode = null
+
+			if (department.PARENT != null) {
+				parent =
+					(departments.find(
+						(d) => d.id === department.PARENT
+					) as DepartmentNode) || null
+			}
+
+			return {
+				id: department.ID,
+				name: department.NAME,
+				parent: parent,
+			}
+		})
+
+		const departmentTree: DepartmentTree =
+			departmentRecordsToDepartmentTree(allDepartments)
+
+		let sqlParams: SqlParams = {}
+
+		const nameParam = (query.nameLike as string) || ''
+		const avatarParam = ((query.hideNoAvatar as string) || '') === 'true'
+		const departmentParam = (query.department as string) || ''
+
+		let sql = `
+			SELECT
+				P.ID AS PERSON_ID,
+				P.NAME AS PERSON_NAME,
+				P.AVATAR_URL,
+				D.ID AS DEPARTMENT_ID,
+				D.NAME AS DEPARTMENT_NAME
+			FROM PEOPLE P
+			INNER JOIN DEPARTMENTS D
+			ON P.DEPARTMENT_ID = D.ID
+		`
+
+		// N.B. In a situation where I couldn't use an ORM and had to build SQL strings dynamically, I would prefer to use
+		// a string builder pattern rather than writing out the string concatenation logic like this.
+		// I prefer to co-locate bind parameter assignment with SQL concatenation to ensure I don't forget to bind any
+		// parameters.
+		if (nameParam || avatarParam || departmentParam) {
+			sql += `
+			WHERE 1 = 1
+			`
+
+			if (nameParam) {
+				sql += `
+				AND P.NAME LIKE :nameParam
+				`
+				sqlParams.nameParam = `%${nameParam.trim().toLowerCase()}%`
+			}
+
+			// In this case, TRUE means exclude people with avatars.
+			if (avatarParam) {
+				sql += `
+				AND P.AVATAR_URL IS NULL
+				`
+			}
+
+			if (departmentParam) {
+				const matches = findDepartments(departmentTree, departmentParam)
+
+				if (matches.length > 1) {
+					sql += `
+					AND D.ID IN (${matches.map((m, i) => `department_${i}`).join(',')})
+					`
+					sqlParams = matches.reduce((acc, curr, i) => {
+						acc[`department_${i}`] = curr.id
+						return acc
+					}, sqlParams)
+				} else if (matches.length === 1) {
+					sql += `
+					AND D.ID = :departmentParam
+					`
+					sqlParams.departmentParam = departmentParam
+				} else {
+					console.info(`Invalid department parameter found: ${departmentParam}`)
+				}
+			}
+		}
+
+		// Per acceptance criteria, limit search results to 100 records maximum.
+		sql += ` LIMIT 100`
+
+		const stmt = db.prepare(sql)
 		const rows = stmt.all(sqlParams)
 
-		if (rows.length > 0) {
-			data = rows.map((row) => {
-				return {
-					id: row.PERSON_ID,
-					name: row.PERSON_NAME,
-					avatar: {
-						url: row.AVATAR_URL,
-					},
-					department: {
-						id: row.DEPARTMENT_ID,
-						name: row.DEPARTMENT_NAME,
-					},
-				}
-			})
-		}
+		data = rows.map((row) => {
+			return {
+				id: row.PERSON_ID,
+				name: row.PERSON_NAME,
+				avatar: {
+					url: row.AVATAR_URL,
+				},
+				department: {
+					id: row.DEPARTMENT_ID,
+					name: row.DEPARTMENT_NAME,
+				},
+			}
+		})
 	} catch (e) {
 		console.error(e)
 		res.status(500).end()
+		return
 	} finally {
 		db.close()
 	}
