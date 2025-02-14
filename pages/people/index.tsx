@@ -178,8 +178,8 @@ export default function PeoplePage({
 	return (
 		<main className="g-grid-container">
 			<div className={s.searchContainer}>
-				<div className={s.searchControls}>
-					<div>
+				<div>
+					<div className={s.masthead}>
 						<h1>HashiCorp Humans</h1>
 						<span>Find a HashiCorp human</span>
 					</div>

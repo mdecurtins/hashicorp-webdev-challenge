@@ -14,17 +14,19 @@ export default function Search({
 	onProfileChange,
 }: SearchProps) {
 	return (
-		<>
-			<input
-				type="text"
-				placeholder="Search people by name"
-				onChange={onInputChange}
-			/>
+		<div className={s.searchControls}>
+			<div>
+				<input
+					type="text"
+					placeholder="Search people by name"
+					onChange={onInputChange}
+				/>
+			</div>
 
 			<div className={s.hideNoImage}>
 				<input type="checkbox" onChange={onProfileChange} />
 				<div>Hide people missing a profile image</div>
 			</div>
-		</>
+		</div>
 	)
 }
