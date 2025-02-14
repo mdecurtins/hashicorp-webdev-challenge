@@ -3,10 +3,17 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react'
-import { executeQuery } from '@datocms/cda-client'
+import React, { useState } from 'react'
+// import { executeQuery } from '@datocms/cda-client'
 import { GetStaticPropsResult } from 'next'
-import { PersonRecord, DepartmentNode, DepartmentTree, Department } from 'types'
+import {
+	PersonRecord,
+	PersonRow,
+	DepartmentNode,
+	DepartmentRow,
+	DepartmentTree,
+	Department,
+} from 'types'
 import BaseLayout from '../../layouts/base'
 import { useRouter } from 'next/router'
 import {
@@ -15,7 +22,8 @@ import {
 	departmentRecordsToDepartmentTree,
 	findChildrenDepartments,
 } from '../../utilities'
-import query from './query.graphql'
+// import query from './query.graphql'
+import Database from 'better-sqlite3'
 
 import Profile from 'components/profile'
 import Search from 'components/search'
@@ -28,21 +36,77 @@ interface Props {
 
 export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
 	// Fetch data from SQLite in the same shape as the GraphQL query would have given us
-	const res = await fetch('http://localhost:3000/api/directory')
-	const results = (await res.json()) as {
-		allPeople: PersonRecord[]
-		allDepartments: DepartmentNode[]
-	}
+	// Fetching via direct SQL calls here because API routes are not available in production in getStaticProps
+	let allDepartments: DepartmentNode[] = []
+	let allPeople: PersonRecord[] = []
 
-	const data = {
-		allPeople: results.allPeople,
-		allDepartments: results.allDepartments,
+	const db = new Database('hashicorp.sqlite')
+	try {
+		const deptsStmt = db.prepare('SELECT * FROM DEPARTMENTS')
+
+		const departments = deptsStmt.all()
+
+		if (departments.length > 0) {
+			allDepartments = departments.map((department: DepartmentRow) => {
+				let parent: DepartmentNode = null
+
+				if (department.PARENT != null) {
+					parent =
+						(departments.find(
+							(d) => d.id === department.PARENT
+						) as DepartmentNode) || null
+				}
+
+				return {
+					id: department.ID,
+					name: department.NAME,
+					parent: parent,
+				}
+			})
+		}
+
+		const peopleStmt = db.prepare('SELECT * FROM PEOPLE')
+
+		const people = peopleStmt.all()
+
+		if (people.length > 0) {
+			allPeople = people.map((person: PersonRow) => {
+				let dept: DepartmentNode = null
+
+				if (person.DEPARTMENT_ID != null) {
+					dept = allDepartments.find(
+						(d) => d.id === person.DEPARTMENT_ID
+					) as DepartmentNode
+				}
+
+				return {
+					id: person.ID,
+					name: person.NAME,
+					title: person.TITLE,
+					avatar: {
+						url: person.AVATAR_URL,
+					},
+					department: dept != null ? { name: dept.name } : null,
+				}
+			})
+		}
+	} catch (e) {
+		console.error(e)
+		// Try to fail gracefully with empty data
+		return {
+			props: {
+				allPeople: [],
+				departmentTree: [],
+			},
+		}
+	} finally {
+		db.close()
 	}
 
 	return {
 		props: {
-			allPeople: data.allPeople,
-			departmentTree: departmentRecordsToDepartmentTree(data.allDepartments),
+			allPeople: allPeople,
+			departmentTree: departmentRecordsToDepartmentTree(allDepartments),
 		},
 	}
 }
