@@ -6,6 +6,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import {
 	departmentRecordsToDepartmentTree,
+	findChildrenDepartments,
 	findDepartments,
 } from '../../utilities'
 import {
@@ -13,7 +14,6 @@ import {
 	DepartmentNode,
 	DepartmentRow,
 	DepartmentTree,
-	PersonRow,
 } from 'types'
 import Database from 'better-sqlite3'
 
@@ -31,7 +31,7 @@ type SqlParams = {
  * Handler function for the HashiCorp API route.
  *
  * Recognized URL query parameters:
- * - `nameLike`: `string` -- Find people with names including the substring `nameLike`
+ * - `searchingName`: `string` -- Find people with names including the substring `nameLike`
  * - `hideNoAvatar`: `boolean` -- Exclude people with no avatar
  * - `department`: `string` -- Find people with the given department id.
  *
@@ -76,7 +76,7 @@ export default function handler(
 
 		let sqlParams: SqlParams = {}
 
-		const nameParam = (query.nameLike as string) || ''
+		const nameParam = (query.searchingName as string) || ''
 		const avatarParam = ((query.hideNoAvatar as string) || '') === 'true'
 		const departmentParam = (query.department as string) || ''
 
@@ -112,7 +112,10 @@ export default function handler(
 		}
 
 		if (departmentParam) {
-			const matches = findDepartments(departmentTree, departmentParam)
+			const matches = findChildrenDepartments(
+				departmentTree,
+				findDepartments(departmentTree, departmentParam)?.[0]?.id
+			)
 
 			if (matches.length > 1) {
 				sql += `
