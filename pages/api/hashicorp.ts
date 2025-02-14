@@ -130,7 +130,7 @@ export default function handler(
 
 			if (matches.length > 1) {
 				sql += `
-				AND D.ID IN (${matches.map((m, i) => `department_${i}`).join(',')})
+				AND D.ID IN (${matches.map((m, i) => `:department_${i}`).join(',')})
 				`
 				sqlParams = matches.reduce((acc, curr, i) => {
 					acc[`department_${i}`] = curr.id

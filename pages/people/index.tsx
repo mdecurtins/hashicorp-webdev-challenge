@@ -60,7 +60,7 @@ export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
 			ON D1.PARENT = D2.ID
 		`)
 
-		const departments = deptsStmt.all()
+		const departments: DepartmentRow[] = deptsStmt.all()
 		allDepartments = departments.map((department: DepartmentRow) => {
 			let parent: Department = null
 
@@ -239,18 +239,25 @@ export default function PeoplePage({
 						clearFiltersHandler={() => {
 							setFilteredDepartments([])
 
+							// Remove department from existing query params
+							const queryNoDept = Object.entries(query).reduce((acc, curr) => {
+								const [key, val] = curr
+								if (key !== 'department') {
+									acc[key] = val
+								}
+								return acc
+							}, {})
+
 							router.push(
 								{
 									pathname: '/people',
-									query: {
-										...query,
-									},
+									query: queryNoDept,
 								},
 								null,
 								{ shallow: true }
 							)
 
-							fetchFilteredData(router, {})
+							fetchFilteredData(router, { department: '' })
 						}}
 						selectFilterHandler={(departmentFilter: Department) => {
 							const totalDepartmentFilter = findDepartments(
