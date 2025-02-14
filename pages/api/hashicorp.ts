@@ -14,6 +14,7 @@ import {
 	DepartmentNode,
 	DepartmentRow,
 	DepartmentTree,
+	Department,
 } from 'types'
 import Database from 'better-sqlite3'
 
@@ -51,17 +52,26 @@ export default function handler(
 	try {
 		let allDepartments: DepartmentNode[] = []
 
-		const deptsStmt = db.prepare('SELECT * FROM DEPARTMENTS')
+		const deptsStmt = db.prepare(`
+			SELECT
+				D1.ID,
+				D1.NAME,
+				D2.ID AS PARENT_ID,
+				D2.NAME AS PARENT_NAME
+			FROM DEPARTMENTS D1
+			LEFT OUTER JOIN DEPARTMENTS D2
+			ON D1.PARENT = D2.ID
+		`)
 		const departments = deptsStmt.all()
 
 		allDepartments = departments.map((department: DepartmentRow) => {
-			let parent: DepartmentNode = null
+			let parent: Department = null
 
-			if (department.PARENT != null) {
-				parent =
-					(departments.find(
-						(d) => d.id === department.PARENT
-					) as DepartmentNode) || null
+			if (department.PARENT_ID != null) {
+				parent = {
+					id: department.PARENT_ID,
+					name: department.PARENT_NAME,
+				}
 			}
 
 			return {
