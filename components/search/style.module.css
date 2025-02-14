@@ -2,12 +2,12 @@
 	display: flex;
 	font-size: 1rem;
 
-& input {
-	margin-right: 0.5rem;
-	width: 1.25rem;
-}
+	& input {
+		margin-right: 0.5rem;
+		width: 1.25rem;
+	}
 
-& input[checked='true'] {
-	color: #1563ff;
-}
+	& input[checked='true'] {
+		color: #1563ff;
+	}
 }
