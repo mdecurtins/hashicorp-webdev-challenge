@@ -11,3 +11,8 @@
 		color: #1563ff;
 	}
 }
+.searchControls {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}

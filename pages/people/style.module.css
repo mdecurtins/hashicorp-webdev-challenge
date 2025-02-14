@@ -16,6 +16,13 @@
 	display: flex;
 }
 
+.masthead {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+}
+
 .personGrid {
 	list-style-type: none;
 	flex: 1 1 75%;
@@ -42,9 +49,5 @@
 
 .searchContainer {
 	display: flex;
-	justify-content: flex-end;
-}
-
-.searchControls {
-	flex: 0 1 75%;
+	justify-content: center;
 }
