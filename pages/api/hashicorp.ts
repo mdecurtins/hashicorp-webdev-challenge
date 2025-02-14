@@ -85,6 +85,7 @@ export default function handler(
 				P.ID AS PERSON_ID,
 				P.NAME AS PERSON_NAME,
 				P.AVATAR_URL,
+				P.TITLE,
 				D.ID AS DEPARTMENT_ID,
 				D.NAME AS DEPARTMENT_NAME
 			FROM PEOPLE P
@@ -148,6 +149,7 @@ export default function handler(
 				avatar: {
 					url: row.AVATAR_URL,
 				},
+				title: row.TITLE,
 				department: {
 					id: row.DEPARTMENT_ID,
 					name: row.DEPARTMENT_NAME,
