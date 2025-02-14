@@ -38,7 +38,8 @@ export type AllData = {
 export type DepartmentRow = {
 	ID: string
 	NAME: string
-	PARENT: string | null
+	PARENT_ID: string | null
+	PARENT_NAME: string | null
 }
 
 export type PersonRow = {
