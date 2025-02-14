@@ -51,51 +51,45 @@ export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
 		const deptsStmt = db.prepare('SELECT * FROM DEPARTMENTS')
 
 		const departments = deptsStmt.all()
+		allDepartments = departments.map((department: DepartmentRow) => {
+			let parent: DepartmentNode = null
 
-		if (departments.length > 0) {
-			allDepartments = departments.map((department: DepartmentRow) => {
-				let parent: DepartmentNode = null
+			if (department.PARENT != null) {
+				parent =
+					(departments.find(
+						(d) => d.id === department.PARENT
+					) as DepartmentNode) || null
+			}
 
-				if (department.PARENT != null) {
-					parent =
-						(departments.find(
-							(d) => d.id === department.PARENT
-						) as DepartmentNode) || null
-				}
-
-				return {
-					id: department.ID,
-					name: department.NAME,
-					parent: parent,
-				}
-			})
-		}
+			return {
+				id: department.ID,
+				name: department.NAME,
+				parent: parent,
+			}
+		})
 
 		const peopleStmt = db.prepare('SELECT * FROM PEOPLE')
 
 		const people = peopleStmt.all()
+		allPeople = people.map((person: PersonRow) => {
+			let dept: DepartmentNode = null
 
-		if (people.length > 0) {
-			allPeople = people.map((person: PersonRow) => {
-				let dept: DepartmentNode = null
+			if (person.DEPARTMENT_ID != null) {
+				dept = allDepartments.find(
+					(d) => d.id === person.DEPARTMENT_ID
+				) as DepartmentNode
+			}
 
-				if (person.DEPARTMENT_ID != null) {
-					dept = allDepartments.find(
-						(d) => d.id === person.DEPARTMENT_ID
-					) as DepartmentNode
-				}
-
-				return {
-					id: person.ID,
-					name: person.NAME,
-					title: person.TITLE,
-					avatar: {
-						url: person.AVATAR_URL,
-					},
-					department: dept != null ? { name: dept.name } : null,
-				}
-			})
-		}
+			return {
+				id: person.ID,
+				name: person.NAME,
+				title: person.TITLE,
+				avatar: {
+					url: person.AVATAR_URL,
+				},
+				department: dept != null ? { name: dept.name } : null,
+			}
+		})
 	} catch (e) {
 		console.error(e)
 		// Try to fail gracefully with empty data
