@@ -3,19 +3,27 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react'
-import { executeQuery } from '@datocms/cda-client'
+import React, { useState } from 'react'
+// import { executeQuery } from '@datocms/cda-client'
 import { GetStaticPropsResult } from 'next'
-import { PersonRecord, DepartmentNode, DepartmentTree, Department } from 'types'
+import {
+	PersonRecord,
+	PersonRow,
+	DepartmentNode,
+	DepartmentRow,
+	DepartmentTree,
+	Department,
+} from 'types'
 import BaseLayout from '../../layouts/base'
-import { useRouter } from 'next/router'
+import { useRouter, NextRouter } from 'next/router'
 import {
 	filterPeople,
 	findDepartments,
 	departmentRecordsToDepartmentTree,
 	findChildrenDepartments,
 } from '../../utilities'
-import query from './query.graphql'
+// import query from './query.graphql'
+import Database from 'better-sqlite3'
 
 import Profile from 'components/profile'
 import Search from 'components/search'
@@ -26,23 +34,79 @@ interface Props {
 	departmentTree: DepartmentTree
 }
 
+type FetchFilteredDataOptions = {
+	searchingName?: string
+	hideNoPicture?: boolean
+	department?: string
+}
+
 export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
 	// Fetch data from SQLite in the same shape as the GraphQL query would have given us
-	const res = await fetch('http://localhost:3000/api/directory')
-	const results = (await res.json()) as {
-		allPeople: PersonRecord[]
-		allDepartments: DepartmentNode[]
-	}
+	// Fetching via direct SQL calls here because API routes are not available in production in getStaticProps
+	let allDepartments: DepartmentNode[] = []
+	let allPeople: PersonRecord[] = []
 
-	const data = {
-		allPeople: results.allPeople,
-		allDepartments: results.allDepartments,
+	const db = new Database('hashicorp.sqlite')
+	try {
+		const deptsStmt = db.prepare('SELECT * FROM DEPARTMENTS')
+
+		const departments = deptsStmt.all()
+		allDepartments = departments.map((department: DepartmentRow) => {
+			let parent: DepartmentNode = null
+
+			if (department.PARENT != null) {
+				parent =
+					(departments.find(
+						(d) => d.id === department.PARENT
+					) as DepartmentNode) || null
+			}
+
+			return {
+				id: department.ID,
+				name: department.NAME,
+				parent: parent,
+			}
+		})
+
+		const peopleStmt = db.prepare('SELECT * FROM PEOPLE')
+
+		const people = peopleStmt.all()
+		allPeople = people.map((person: PersonRow) => {
+			let dept: DepartmentNode = null
+
+			if (person.DEPARTMENT_ID != null) {
+				dept = allDepartments.find(
+					(d) => d.id === person.DEPARTMENT_ID
+				) as DepartmentNode
+			}
+
+			return {
+				id: person.ID,
+				name: person.NAME,
+				title: person.TITLE,
+				avatar: {
+					url: person.AVATAR_URL,
+				},
+				department: dept != null ? { name: dept.name } : null,
+			}
+		})
+	} catch (e) {
+		console.error(e)
+		// Try to fail gracefully with empty data
+		return {
+			props: {
+				allPeople: [],
+				departmentTree: [],
+			},
+		}
+	} finally {
+		db.close()
 	}
 
 	return {
 		props: {
-			allPeople: data.allPeople,
-			departmentTree: departmentRecordsToDepartmentTree(data.allDepartments),
+			allPeople: allPeople,
+			departmentTree: departmentRecordsToDepartmentTree(allDepartments),
 		},
 	}
 }
@@ -54,16 +118,15 @@ export default function PeoplePage({
 	const router = useRouter()
 	const { query } = router
 
+	const [filteredDepartments, setFilteredDepartments] = useState([])
+
+	// Filter on initial load, accounting for any URL query parameters.
 	const searchingName = (query.searchingName as string) || ''
 	const selectedDepartment = (query.department as string) || ''
-
-	//const [searchingName, setSearchingName] = useState('')
-	const [hideNoPicture, setHideNoPicture] = useState(false)
-	const [filteredDepartments, setFilteredDepartments] = useState([])
-	const [apiResults, setApiResults] = useState([])
+	const hideNoPicture = (query.hideNoPicture as string) === 'true'
 
 	const peopleFiltered = filterPeople(
-		apiResults.length > 0 ? apiResults : allPeople,
+		allPeople,
 		searchingName,
 		hideNoPicture,
 		findChildrenDepartments(
@@ -73,6 +136,37 @@ export default function PeoplePage({
 				findDepartments(departmentTree, selectedDepartment)?.[0]?.id
 		)
 	)
+
+	const [filteredPeople, setFilteredPeople] = useState(peopleFiltered)
+
+	/**
+	 * Function to fetch filtered people data.
+	 *
+	 * @param router the current state of the Next router
+	 * @param opts contains the changed values to pass as query parameters
+	 */
+	const fetchFilteredData = async (
+		router: NextRouter,
+		opts: FetchFilteredDataOptions
+	) => {
+		// Selectively overwrite current query with changed query opts
+		const params: FetchFilteredDataOptions = { ...router.query, ...opts }
+
+		const urlParams = Object.entries(params)
+			.filter(
+				([key, value]) =>
+					(key === 'searchingName' || key === 'department') && value !== ''
+			)
+			.map(([key, value]) => `${key}=${value}`)
+			.join('&')
+
+		const res = await fetch(
+			`/api/hashicorp${urlParams.length ? `?${urlParams}` : ''}`
+		)
+		const data = await res.json()
+
+		setFilteredPeople(data.results)
+	}
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
 		(acc: string[], department: DepartmentNode) => [...acc, department.id],
@@ -89,14 +183,6 @@ export default function PeoplePage({
 				</div>
 				<Search
 					onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						//setSearchingName(e.target.value)
-						fetch(`/api/hashicorp?search=${e.target.value}`)
-							.then((res) => res.json())
-							.then((data: { results: PersonRecord[] }) => {
-								setApiResults(data.results)
-							})
-							.catch((err) => console.error(err))
-
 						router.push(
 							{
 								pathname: '/people',
@@ -108,10 +194,24 @@ export default function PeoplePage({
 							null,
 							{ shallow: true }
 						)
+
+						fetchFilteredData(router, { searchingName: e.target.value })
 					}}
-					onProfileChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-						setHideNoPicture(e.target.checked)
-					}
+					onProfileChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+						router.push(
+							{
+								pathname: '/people',
+								query: {
+									...query,
+									hideNoPicture: e.target.checked,
+								},
+							},
+							null,
+							{ shallow: true }
+						)
+
+						fetchFilteredData(router, { hideNoPicture: e.target.checked })
+					}}
 				/>
 			</div>
 			<div>
@@ -131,6 +231,8 @@ export default function PeoplePage({
 								null,
 								{ shallow: true }
 							)
+
+							fetchFilteredData(router, {})
 						}}
 						selectFilterHandler={(departmentFilter: Department) => {
 							const totalDepartmentFilter = findDepartments(
@@ -150,17 +252,19 @@ export default function PeoplePage({
 								null,
 								{ shallow: true }
 							)
+
+							fetchFilteredData(router, { department: departmentFilter.id })
 						}}
 						departmentTree={departmentTree}
 					/>
 				</aside>
 				<ul>
-					{peopleFiltered.length === 0 && (
+					{filteredPeople.length === 0 && (
 						<div>
 							<span>No results found.</span>
 						</div>
 					)}
-					{peopleFiltered.map((person: PersonRecord) => {
+					{filteredPeople.map((person: PersonRecord) => {
 						return (
 							<li key={person.id}>
 								<Profile
