@@ -126,7 +126,7 @@ export default function PeoplePage({
 	const selectedDepartment = (query.department as string) || ''
 	const hideNoPicture = (query.hideNoPicture as string) === 'true'
 
-	const peopleFiltered = filterPeople(
+	const originalPeopleFiltered = filterPeople(
 		allPeople,
 		searchingName,
 		hideNoPicture,
@@ -138,7 +138,11 @@ export default function PeoplePage({
 		)
 	)
 
-	const [filteredPeople, setFilteredPeople] = useState(peopleFiltered)
+	const [apiFilteredPeople, setApiFilteredPeople] = useState<
+		PersonRecord[] | undefined
+	>(undefined)
+
+	const filteredPeople = apiFilteredPeople || originalPeopleFiltered
 
 	/**
 	 * Function to fetch filtered people data.
@@ -168,7 +172,7 @@ export default function PeoplePage({
 		)
 		const data = await res.json()
 
-		setFilteredPeople(data.results)
+		setApiFilteredPeople(data.results)
 	}
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
