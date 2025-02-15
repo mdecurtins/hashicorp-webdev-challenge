@@ -285,7 +285,11 @@ export default function PeoplePage({
 						departmentTree={departmentTree}
 					/>
 				</aside>
-				<ul className={s.personGrid}>
+				<ul
+					className={`${filteredPeople.length === 0 ? s.noResults : ''} ${
+						s.personGrid
+					}`}
+				>
 					{filteredPeople.length === 0 && (
 						<div>
 							<span>No results found.</span>
