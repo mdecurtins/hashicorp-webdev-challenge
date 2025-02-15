@@ -26,6 +26,22 @@
 		font-family: Open Sans, sans-serif;
 		font-weight: 300;
 	}
+
+	& span {
+		color: #4e515d;
+	}
+}
+
+.noResults {
+	color: #4e515d;
+	font-family: Open Sans, sans-serif;
+	font-size: 14px;
+	line-height: 28px;
+	text-align: center;
+
+	& div {
+		width: min(90vw, 702px);
+	}
 }
 
 .personGrid {
@@ -61,6 +77,8 @@
 	@media (--small) {
 		padding-left: 0;
 	}
+
+	margin-bottom: auto;
 }
 
 .searchColumn {
