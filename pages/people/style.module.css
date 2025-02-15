@@ -8,3 +8,85 @@
 /* you can use standard css plus anything from postcss-preset-env */
 
 /* ref: https://preset-env.cssdb.org/ */
+.departmentFilter {
+	flex: 0 1 20%;
+}
+
+.filterGrid {
+	display: flex;
+}
+
+.masthead {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+
+	& h1 {
+		font-family: Open Sans, sans-serif;
+		font-weight: 300;
+	}
+
+	& span {
+		color: #4e515d;
+	}
+}
+
+.noResults {
+	color: #4e515d;
+	font-family: Open Sans, sans-serif;
+	font-size: 14px;
+	line-height: 28px;
+	text-align: center;
+
+	& div {
+		width: min(90vw, 702px);
+	}
+}
+
+.personGrid {
+	list-style-type: none;
+	flex: 0 1 100%;
+	display: grid;
+
+	/*
+	With deep appreciation for: https://css-tricks.com/an-auto-filling-css-grid-with-max-columns/
+	*/
+	--num-columns: 3;
+	--column-min-width: 280px;
+	--num-gutters: 0;
+	--gutter-size: 20px;
+
+	@media (--medium-up) {
+		--num-gutters: 2;
+
+		flex: 1 1 80%;
+	}
+
+	--total-gutter-size: calc(var(--gutter-size) * var(--num-gutters));
+	--column-max-width: calc(
+		(100% - var(--total-gutter-size)) / var(--num-columns)
+	);
+
+	grid-template-columns: repeat(
+		auto-fill,
+		minmax(max(var(--column-min-width), var(--column-max-width)), 1fr)
+	);
+	grid-gap: calc(var(--gutter-size) * 2) var(--gutter-size);
+
+	@media (--small) {
+		padding-left: 0;
+	}
+
+	margin-bottom: auto;
+}
+
+.searchColumn {
+	min-width: 40%;
+}
+
+.searchContainer {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 2rem;
+}

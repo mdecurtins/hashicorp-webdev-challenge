@@ -27,3 +27,25 @@ export interface PersonRecord {
 	}
 	department?: Department
 }
+
+export type AllData = {
+	allDepartments: DepartmentNode[]
+	allPeople: PersonRecord[]
+}
+
+// Typically we might want to generate these TS types from our SQL schema, but that's beyond the scope of this
+// challenge
+export type DepartmentRow = {
+	ID: string
+	NAME: string
+	PARENT_ID: string | null
+	PARENT_NAME: string | null
+}
+
+export type PersonRow = {
+	ID: string
+	NAME: string
+	TITLE: string
+	AVATAR_URL: string | null
+	DEPARTMENT_ID: string | null
+}

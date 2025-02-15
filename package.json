@@ -56,7 +56,7 @@
 		"start": "next dev",
 		"static": "next build && next export",
 		"test": "jest",
-		"create-db": "tsx ./scripts/createDB.ts"
+		"create-db": "tsx --env-file=.env ./scripts/createDB.ts"
 	},
 	"engines": {
 		"node": ">=20.0.0",
